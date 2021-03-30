@@ -1,0 +1,26 @@
+name: pr-cleanup
+
+on:
+  pull_request:
+    types: [ closed ]
+
+jobs:
+  prune:
+    name: Prune
+    runs-on: ubuntu-latest
+    steps:
+      # see https://dev.to/bobheadxi/branch-previews-with-google-app-engine-and-github-actions-3pco
+      - name: extract branch name
+        id: get_branch
+        shell: bash
+        env:
+          PR_HEAD: ${{ github.head_ref }}
+        run: echo "##[set-output name=branch;]$(echo ${PR_HEAD#refs/heads/} | tr / -)"
+
+      - name: mark environment as deactivated
+        uses: bobheadxi/deployments@v0.4.3
+        with:
+          step: deactivate-env
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: ${{ steps.get_branch.outputs.branch }}
+          desc: Deployment was pruned
