@@ -15,10 +15,8 @@ jobs:
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: pr
+          env: pr-${{github.event.number}}
           ref: ${{ github.head_ref }}
-          no_override: false
-          auto_inactive: false
       
       - name: Sleep for 10 seconds
         uses: jakejarvis/wait-action@master
@@ -34,4 +32,3 @@ jobs:
           status: ${{ job.status }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
           env_url: https://www.google.com
-          auto_inactive: false

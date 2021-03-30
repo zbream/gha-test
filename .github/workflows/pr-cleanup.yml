@@ -23,5 +23,5 @@ jobs:
           step: deactivate-env
           token: ${{ secrets.GITHUB_TOKEN }}
           # env: ${{ steps.get_branch.outputs.branch }}
-          env: pr
+          env: pr-${{github.event.number}}
           desc: Deployment was pruned
