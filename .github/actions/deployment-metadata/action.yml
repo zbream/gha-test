@@ -1,0 +1,15 @@
+name: "Deployment Metadata"
+description: "Gather metadata used for deploying to on-prem cluster."
+inputs:
+  repo_name:
+    description: "Unique name for the repository."
+    required: true
+    default: ${{ github.event.repository.name }}
+outputs:
+  feature-id:
+    description: "Identifier for feature, based on ref. Example: pr-1, main"
+  deployment-name:
+    description: "Unique name of deployment. Example: feather-pr-1, feather-main"
+runs:
+  using: "node12"
+  main: "index.js"

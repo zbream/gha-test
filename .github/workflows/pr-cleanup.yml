@@ -1,0 +1,60 @@
+name: pr-cleanup
+
+on:
+  pull_request:
+    types: [ closed ]
+
+jobs:
+  prune:
+    name: Prune
+    runs-on: [self-hosted]
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '15'
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          # npm cache files are stored in `~/.npm` on Linux/macOS
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install
+        run: npm ci --quiet --no-progress
+        working-directory: ./.github
+
+      - name: Deployment Metadata
+        id: deployment-metadata
+        uses: ./.github/actions/deployment-metadata
+
+      - name: Configure Cluster
+        uses: azure/k8s-set-context@v1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.SELFHOST_KUBECONFIG_NGWEB }}
+      
+      - name: Uninstall Deployment
+        env:
+          DEPLOYMENT_NAME: ${{ steps.deployment-metadata.outputs.deployment-name }}
+        run: helm uninstall ${DEPLOYMENT_NAME} --namespace gha-test
+        continue-on-error: true
+
+      - uses: strumwolf/delete-deployment-environment@v2
+        env:
+          DEPLOYMENT_ENV: dev-${{ steps.deployment-metadata.outputs.feature-id }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: ${{ env.DEPLOYMENT_ENV }}
+          onlyRemoveDeployments: true
